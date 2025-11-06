@@ -1,5 +1,6 @@
 package com.example.audioprocessorsample
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,9 +12,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.DefaultAudioSink
 import com.example.audioprocessorsample.ui.theme.AudioProcessorSampleTheme
 
+@UnstableApi
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,7 +34,19 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        val player = ExoPlayer.Builder(this).build()
+        val factory = object : DefaultRenderersFactory(this) {
+
+            override fun buildAudioSink(
+                context: Context,
+                enableFloatOutput: Boolean,
+                enableAudioTrackPlaybackParams: Boolean
+            ): AudioSink {
+                val audioSinkBuilder = DefaultAudioSink.Builder(this@MainActivity)
+                audioSinkBuilder.setAudioProcessors(listOf(SwapChannelProcessor()).toTypedArray())
+                return audioSinkBuilder.build()
+            }
+        }
+        val player = ExoPlayer.Builder(this, factory).build()
     }
 }
 
