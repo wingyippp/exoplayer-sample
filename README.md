@@ -3,7 +3,7 @@ a sample project of the exoplayer
 
 # 环境搭建步骤
 
-1. 下载并安装(Android Studio)[https://developer.android.com/studio]
+1. 下载并安装[Android Studio](https://developer.android.com/studio)
 2. 克隆Github工程到本地 `git clone git@github.com:wingyippp/exoplayer-sample.git`
 3. 启动Android Studio，选择打开步骤2的工程根目录
 4. Android Studio会自动开始下载Android SDK
