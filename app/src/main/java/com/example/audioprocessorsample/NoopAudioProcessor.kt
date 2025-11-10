@@ -8,6 +8,8 @@ import java.nio.ByteBuffer
 @UnstableApi
 class NoopAudioProcessor : BaseAudioProcessor() {
 
+    private var enabled: Boolean = false;
+
     // 加载 native 库
     companion object {
         init {
@@ -60,15 +62,25 @@ class NoopAudioProcessor : BaseAudioProcessor() {
 
     override fun queueInput(inputBuffer: ByteBuffer) {
 
-        // 调用 native 方法处理
-        val processedBuffer = processBufferNative(
-            inputBuffer,
-            sampleRate = inputAudioFormat.sampleRate,
-            channelCount = inputAudioFormat.channelCount,
-            bytesPerFrame = inputAudioFormat.bytesPerFrame
-        )
+        val processedBuffer = if (enabled) {
+            // 调用 native 方法处理
+            processBufferNative(
+                inputBuffer,
+                sampleRate = inputAudioFormat.sampleRate,
+                channelCount = inputAudioFormat.channelCount,
+                bytesPerFrame = inputAudioFormat.bytesPerFrame
+            )
+        } else {
+            inputBuffer
+        }
 
         val remaining = processedBuffer.remaining()
         replaceOutputBuffer(remaining).put(processedBuffer).flip()
+    }
+
+    fun isEnabled(): Boolean = this.enabled
+
+    fun setEnable(enable: Boolean) {
+        this.enabled = enable
     }
 }

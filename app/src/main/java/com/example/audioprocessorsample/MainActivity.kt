@@ -55,6 +55,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         copyAssets()
+        val audioProcessor = NoopAudioProcessor()
         val factory = object : DefaultRenderersFactory(this) {
 
             override fun buildAudioSink(
@@ -63,7 +64,7 @@ class MainActivity : ComponentActivity() {
                 enableAudioTrackPlaybackParams: Boolean
             ): AudioSink {
                 val audioSinkBuilder = DefaultAudioSink.Builder(this@MainActivity)
-                audioSinkBuilder.setAudioProcessors(listOf(NoopAudioProcessor()).toTypedArray())
+                audioSinkBuilder.setAudioProcessors(listOf(audioProcessor).toTypedArray())
                 return audioSinkBuilder.build()
             }
         }
@@ -72,6 +73,7 @@ class MainActivity : ComponentActivity() {
                 ExoPlayerScreen(
                     Uri.fromFile(samplesPath.listFiles()!!.first()),
                     factory,
+                    audioProcessor,
                 )
             }
         }
@@ -106,7 +108,11 @@ class MainActivity : ComponentActivity() {
 @ExperimentalMaterial3Api
 @UnstableApi
 @Composable
-fun ExoPlayerScreen(uri: Uri, factory: DefaultRenderersFactory) {
+fun ExoPlayerScreen(
+    uri: Uri,
+    factory: DefaultRenderersFactory,
+    audioProcessor: NoopAudioProcessor,
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -125,6 +131,8 @@ fun ExoPlayerScreen(uri: Uri, factory: DefaultRenderersFactory) {
     // State to track if the player is currently playing
     val isPlayingState = remember { mutableStateOf(true) }
     val isPlaying = isPlayingState.value
+    val isAudioProcessorEnabledState = remember { mutableStateOf(false) }
+    val isAudioProcessorEnabled = isAudioProcessorEnabledState.value
 
     // 2. Manage ExoPlayer lifecycle with DisposableEffect
     // This releases the player resources when the composable leaves the screen.
@@ -205,6 +213,25 @@ fun ExoPlayerScreen(uri: Uri, factory: DefaultRenderersFactory) {
                 ) {
                     Text(
                         text = if (isPlaying) "PAUSE" else "PLAY",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // 5. Enable/Disable AudioProcessor
+                Button(
+                    onClick = {
+                        val toUpdate = !audioProcessor.isEnabled()
+                        audioProcessor.setEnable(toUpdate)
+                        isAudioProcessorEnabledState.value = toUpdate
+                    },
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .fillMaxWidth(0.6f)
+                ) {
+                    Text(
+                        text = if (isAudioProcessorEnabled) "Enable AudioProcessor" else "Disable AudioProcessor",
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
