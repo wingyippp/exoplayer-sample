@@ -61,23 +61,19 @@ class NoopAudioProcessor : BaseAudioProcessor() {
     }
 
     override fun queueInput(inputBuffer: ByteBuffer) {
-        if (enabled) {
-            // 调用 native 方法处理
-            val processedBuffer = processBufferNative(
-                inputBuffer,
-                sampleRate = inputAudioFormat.sampleRate,
-                channelCount = inputAudioFormat.channelCount,
-                bytesPerFrame = inputAudioFormat.bytesPerFrame
-            ) ?: inputBuffer
-            val remaining = processedBuffer.remaining()
-            if (remaining > 0) {
-                replaceOutputBuffer(remaining).put(processedBuffer).flip()
+        val processedBuffer = inputBuffer.takeIf { enabled }
+            ?.let {
+                processBufferNative(
+                    it,
+                    sampleRate = inputAudioFormat.sampleRate,
+                    channelCount = inputAudioFormat.channelCount,
+                    bytesPerFrame = inputAudioFormat.bytesPerFrame
+                )
             }
-        } else {
-            val remaining = inputBuffer.remaining()
-            if (remaining > 0) {
-                replaceOutputBuffer(remaining).put(inputBuffer).flip()
-            }
+            ?: inputBuffer
+        val remaining = processedBuffer.remaining()
+        if (remaining > 0) {
+            replaceOutputBuffer(remaining).put(processedBuffer).flip()
         }
     }
 
