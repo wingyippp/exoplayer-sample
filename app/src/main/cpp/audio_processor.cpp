@@ -44,4 +44,39 @@ Java_com_example_audioprocessorsample_NoopAudioProcessor_processBufferNative(
     return outputBuffer;
 }
 
+JNIEXPORT void JNICALL
+Java_com_example_audioprocessorsample_NoopAudioProcessor_onConfigureNative(
+        JNIEnv *env,
+        jobject thiz,
+        jint sampleRate,
+        jint channelCount,
+        jint bytesPerFrame) {
+    // Called when the processor is configured for a new input format.
+    LOGD("onConfigure");
+}
+
+JNIEXPORT void JNICALL
+Java_com_example_audioprocessorsample_NoopAudioProcessor_onResetNative(
+        JNIEnv *env,
+        jobject thiz) {
+    // Called when the processor is reset.
+    LOGD("onReset");
+}
+
+JNIEXPORT void JNICALL
+Java_com_example_audioprocessorsample_NoopAudioProcessor_onFlushNative(
+        JNIEnv *env,
+        jobject thiz) {
+    // Called when the processor is flushed.
+    LOGD("onFlush");
+}
+
+JNIEXPORT void JNICALL
+Java_com_example_audioprocessorsample_NoopAudioProcessor_onQueueEndOfStreamNative(
+        JNIEnv *env,
+        jobject thiz) {
+    // Called when the end-of-stream is queued to the processor.
+    LOGD("onQueueEndOfStream");
+}
+
 } // extern "C"

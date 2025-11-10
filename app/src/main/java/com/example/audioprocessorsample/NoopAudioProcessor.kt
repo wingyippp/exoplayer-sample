@@ -1,5 +1,6 @@
 package com.example.audioprocessorsample
 
+import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.audio.BaseAudioProcessor
 import androidx.media3.common.util.UnstableApi
 import java.nio.ByteBuffer
@@ -14,13 +15,48 @@ class NoopAudioProcessor : BaseAudioProcessor() {
         }
     }
 
-    // 声明 native 方法
+    private external fun onConfigureNative(
+        sampleRate: Int,
+        channelCount: Int,
+        bytesPerFrame: Int,
+    )
+
     private external fun processBufferNative(
         inputBuffer: ByteBuffer,
         sampleRate: Int,
         channelCount: Int,
         bytesPerFrame: Int,
     ): ByteBuffer
+
+    private external fun onResetNative()
+
+    private external fun onFlushNative()
+
+    private external fun onQueueEndOfStreamNative()
+
+    override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
+        onConfigureNative(
+            inputAudioFormat.sampleRate,
+            inputAudioFormat.channelCount,
+            inputAudioFormat.bytesPerFrame,
+        )
+        return super.onConfigure(inputAudioFormat)
+    }
+
+    override fun onReset() {
+        onResetNative()
+        super.onReset()
+    }
+
+    override fun onQueueEndOfStream() {
+        onQueueEndOfStreamNative()
+        super.onQueueEndOfStream()
+    }
+
+    override fun onFlush() {
+        onFlushNative()
+        super.onFlush()
+    }
 
     override fun queueInput(inputBuffer: ByteBuffer) {
 
