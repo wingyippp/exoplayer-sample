@@ -28,7 +28,7 @@ class NoopAudioProcessor : BaseAudioProcessor() {
         sampleRate: Int,
         channelCount: Int,
         bytesPerFrame: Int,
-    ): ByteBuffer
+    ): ByteBuffer?
 
     private external fun onResetNative()
 
@@ -42,7 +42,7 @@ class NoopAudioProcessor : BaseAudioProcessor() {
             inputAudioFormat.channelCount,
             inputAudioFormat.bytesPerFrame,
         )
-        return super.onConfigure(inputAudioFormat)
+        return inputAudioFormat
     }
 
     override fun onReset() {
@@ -61,21 +61,24 @@ class NoopAudioProcessor : BaseAudioProcessor() {
     }
 
     override fun queueInput(inputBuffer: ByteBuffer) {
-
-        val processedBuffer = if (enabled) {
+        if (enabled) {
             // 调用 native 方法处理
-            processBufferNative(
+            val processedBuffer = processBufferNative(
                 inputBuffer,
                 sampleRate = inputAudioFormat.sampleRate,
                 channelCount = inputAudioFormat.channelCount,
                 bytesPerFrame = inputAudioFormat.bytesPerFrame
-            )
+            ) ?: inputBuffer
+            val remaining = processedBuffer.remaining()
+            if (remaining > 0) {
+                replaceOutputBuffer(remaining).put(processedBuffer).flip()
+            }
         } else {
-            inputBuffer
+            val remaining = inputBuffer.remaining()
+            if (remaining > 0) {
+                replaceOutputBuffer(remaining).put(inputBuffer).flip()
+            }
         }
-
-        val remaining = processedBuffer.remaining()
-        replaceOutputBuffer(remaining).put(processedBuffer).flip()
     }
 
     fun isEnabled(): Boolean = this.enabled
