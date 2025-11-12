@@ -5,6 +5,8 @@ import androidx.media3.common.audio.BaseAudioProcessor
 import androidx.media3.common.util.UnstableApi
 import java.nio.ByteBuffer
 
+private const val TAG = "NoopAudioProcessor"
+
 @UnstableApi
 class NoopAudioProcessor : BaseAudioProcessor() {
 
@@ -61,6 +63,9 @@ class NoopAudioProcessor : BaseAudioProcessor() {
     }
 
     override fun queueInput(inputBuffer: ByteBuffer) {
+        if (!inputBuffer.hasRemaining()) {
+            return
+        }
         val processedBuffer = inputBuffer.takeIf { enabled }
             ?.let {
                 processBufferNative(
