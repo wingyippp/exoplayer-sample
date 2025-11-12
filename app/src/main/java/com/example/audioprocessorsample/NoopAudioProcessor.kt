@@ -10,7 +10,8 @@ private const val TAG = "NoopAudioProcessor"
 @UnstableApi
 class NoopAudioProcessor : BaseAudioProcessor() {
 
-    private var enabled: Boolean = false;
+    private var enabled: Boolean = false
+    private var instancePointer: Long = 0L
 
     // 加载 native 库
     companion object {
@@ -23,23 +24,24 @@ class NoopAudioProcessor : BaseAudioProcessor() {
         sampleRate: Int,
         channelCount: Int,
         bytesPerFrame: Int,
-    )
+    ): Long
 
     private external fun processBufferNative(
         inputBuffer: ByteBuffer,
         sampleRate: Int,
         channelCount: Int,
         bytesPerFrame: Int,
+        instancePointer: Long,
     ): ByteBuffer?
 
-    private external fun onResetNative()
+    private external fun onResetNative(instancePointer: Long)
 
     private external fun onFlushNative()
 
     private external fun onQueueEndOfStreamNative()
 
     override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
-        onConfigureNative(
+        instancePointer = onConfigureNative(
             inputAudioFormat.sampleRate,
             inputAudioFormat.channelCount,
             inputAudioFormat.bytesPerFrame,
@@ -48,7 +50,7 @@ class NoopAudioProcessor : BaseAudioProcessor() {
     }
 
     override fun onReset() {
-        onResetNative()
+        onResetNative(instancePointer)
         super.onReset()
     }
 
@@ -72,7 +74,8 @@ class NoopAudioProcessor : BaseAudioProcessor() {
                     it,
                     sampleRate = inputAudioFormat.sampleRate,
                     channelCount = inputAudioFormat.channelCount,
-                    bytesPerFrame = inputAudioFormat.bytesPerFrame
+                    bytesPerFrame = inputAudioFormat.bytesPerFrame,
+                    instancePointer = instancePointer,
                 )
             }
             ?: inputBuffer

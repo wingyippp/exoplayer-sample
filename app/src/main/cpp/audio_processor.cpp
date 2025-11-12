@@ -15,7 +15,8 @@ Java_com_example_audioprocessorsample_NoopAudioProcessor_processBufferNative(
         jobject inputBuffer,
         jint sampleRate,
         jint channelCount,
-        jint bytesPerFrame) {
+        jint bytesPerFrame,
+        jlong instancePointer) {
 
     // 1. 获取 ByteBuffer 的直接缓冲区指针
     void *inputPtr = env->GetDirectBufferAddress(inputBuffer);
@@ -44,7 +45,7 @@ Java_com_example_audioprocessorsample_NoopAudioProcessor_processBufferNative(
     return outputBuffer;
 }
 
-JNIEXPORT void JNICALL
+JNIEXPORT jlong JNICALL
 Java_com_example_audioprocessorsample_NoopAudioProcessor_onConfigureNative(
         JNIEnv *env,
         jobject thiz,
@@ -53,14 +54,16 @@ Java_com_example_audioprocessorsample_NoopAudioProcessor_onConfigureNative(
         jint bytesPerFrame) {
     // Called when the processor is configured for a new input format.
     LOGD("onConfigure");
+    return 2;
 }
 
 JNIEXPORT void JNICALL
 Java_com_example_audioprocessorsample_NoopAudioProcessor_onResetNative(
         JNIEnv *env,
-        jobject thiz) {
+        jobject thiz,
+        jlong instancePointer) {
     // Called when the processor is reset.
-    LOGD("onReset");
+    LOGD("onReset %lld", instancePointer);
 }
 
 JNIEXPORT void JNICALL
