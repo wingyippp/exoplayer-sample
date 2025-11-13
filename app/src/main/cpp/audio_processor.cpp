@@ -27,7 +27,7 @@ extern "C" {
 /**
  * Process 16-bit PCM audio data with 50% loudness reduction.
  */
-void processPcm16Bit(int16_t* input, int16_t* output, jint numSamples) {
+void processPcm16Bit(const int16_t* input, int16_t* output, jint numSamples) {
     for (jint i = 0; i < numSamples; i++) {
         int16_t sample = input[i];
 
@@ -35,7 +35,7 @@ void processPcm16Bit(int16_t* input, int16_t* output, jint numSamples) {
         float processed = static_cast<float>(sample) * GAIN;
 
         // Round and clamp
-        int32_t result = static_cast<int32_t>(processed);
+        auto result = static_cast<int32_t>(processed);
         result = std::max(static_cast<int32_t>(INT16_MIN),
                           std::min(static_cast<int32_t>(INT16_MAX), result));
 
@@ -46,7 +46,7 @@ void processPcm16Bit(int16_t* input, int16_t* output, jint numSamples) {
 /**
  * Process 32-bit float PCM audio data with 50% loudness reduction.
  */
-void processPcmFloat(float* input, float* output, jint numSamples) {
+void processPcmFloat(const float* input, float* output, jint numSamples) {
     for (jint i = 0; i < numSamples; i++) {
         float sample = input[i];
         float processed = sample * GAIN;
@@ -61,7 +61,7 @@ void processPcmFloat(float* input, float* output, jint numSamples) {
 extern "C" JNIEXPORT void JNICALL
 Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_processPcm(
         JNIEnv *env,
-        jobject thiz,
+        jobject thisObject,
         jobject inputBuffer,
         jobject outputBuffer,
         jint position,
@@ -69,8 +69,8 @@ Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_processPcm(
         jint encoding) {
 
     // Get direct buffer addresses
-    uint8_t* inputBase = static_cast<uint8_t*>(env->GetDirectBufferAddress(inputBuffer));
-    uint8_t* outputBase = static_cast<uint8_t*>(env->GetDirectBufferAddress(outputBuffer));
+    auto* inputBase = static_cast<uint8_t*>(env->GetDirectBufferAddress(inputBuffer));
+    auto* outputBase = static_cast<uint8_t*>(env->GetDirectBufferAddress(outputBuffer));
 
     // Validate buffers
     if (inputBase == nullptr || outputBase == nullptr) {
@@ -121,7 +121,7 @@ Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_processPcm(
 JNIEXPORT jlong JNICALL
 Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_onConfigureNative(
         JNIEnv *env,
-        jobject thiz,
+        jobject thisObject,
         jint sampleRate,
         jint channelCount,
         jint bytesPerFrame) {
@@ -133,7 +133,7 @@ Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_onConfigureN
 JNIEXPORT void JNICALL
 Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_onResetNative(
         JNIEnv *env,
-        jobject thiz,
+        jobject thisObject,
         jlong instancePointer) {
     // Called when the processor is reset.
     LOGD("onReset %lld", instancePointer);
@@ -142,7 +142,7 @@ Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_onResetNativ
 JNIEXPORT void JNICALL
 Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_onFlushNative(
         JNIEnv *env,
-        jobject thiz) {
+        jobject thisObject) {
     // Called when the processor is flushed.
     LOGD("onFlush");
 }
@@ -150,7 +150,7 @@ Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_onFlushNativ
 JNIEXPORT void JNICALL
 Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_onQueueEndOfStreamNative(
         JNIEnv *env,
-        jobject thiz) {
+        jobject thisObject) {
     // Called when the end-of-stream is queued to the processor.
     LOGD("onQueueEndOfStream");
 }
