@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         copyAssets()
-        val audioProcessor = NoopAudioProcessor()
+        val audioProcessor = LoudnessReducerAudioProcessor()
         val factory = object : DefaultRenderersFactory(this) {
 
             override fun buildAudioSink(
@@ -111,7 +111,7 @@ class MainActivity : ComponentActivity() {
 fun ExoPlayerScreen(
     uri: Uri,
     factory: DefaultRenderersFactory,
-    audioProcessor: NoopAudioProcessor,
+    audioProcessor: LoudnessReducerAudioProcessor,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -231,7 +231,7 @@ fun ExoPlayerScreen(
                         .fillMaxWidth(0.6f)
                 ) {
                     Text(
-                        text = if (isAudioProcessorEnabled) "Enable AudioProcessor" else "Disable AudioProcessor",
+                        text = if (isAudioProcessorEnabled) "To Disable AudioProcessor" else "To Enable AudioProcessor",
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
