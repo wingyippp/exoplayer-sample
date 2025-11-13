@@ -7,6 +7,7 @@
 
 #define LOG_TAG "AudioProcessor"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 // Define encoding constants matching Media3's C class
 #define ENCODING_PCM_16BIT 2
@@ -19,55 +20,31 @@ extern "C" {
 /**
  * Process 16-bit PCM audio data with 50% loudness reduction.
  */
-void processPcm16Bit(uint8_t* input, uint8_t* output, jint size) {
-    // Cast to int16_t pointers for easier processing
-    int16_t* inputSamples = reinterpret_cast<int16_t*>(input);
-    int16_t* outputSamples = reinterpret_cast<int16_t*>(output);
-
-    // Calculate number of 16-bit samples
-    jint numSamples = size / sizeof(int16_t);
-
-    // Process each 16-bit sample
+void processPcm16Bit(int16_t* input, int16_t* output, jint numSamples) {
     for (jint i = 0; i < numSamples; i++) {
-        // Read 16-bit signed integer sample
-        int16_t sample = inputSamples[i];
+        int16_t sample = input[i];
 
-        // Apply gain (reduce to 50%)
-        int32_t processedSample = static_cast<int32_t>(sample * GAIN);
+        // Apply gain - convert to float for precision
+        float processed = static_cast<float>(sample) * GAIN;
 
-        // Clamp to 16-bit range
-        processedSample = std::max(static_cast<int32_t>(INT16_MIN),
-                                   std::min(static_cast<int32_t>(INT16_MAX), processedSample));
+        // Round and clamp
+        int32_t result = static_cast<int32_t>(processed);
+        result = std::max(static_cast<int32_t>(INT16_MIN),
+                          std::min(static_cast<int32_t>(INT16_MAX), result));
 
-        // Write processed sample
-        outputSamples[i] = static_cast<int16_t>(processedSample);
+        output[i] = static_cast<int16_t>(result);
     }
 }
 
 /**
  * Process 32-bit float PCM audio data with 50% loudness reduction.
  */
-void processPcmFloat(uint8_t* input, uint8_t* output, jint size) {
-    // Cast to float pointers for easier processing
-    float* inputFloats = reinterpret_cast<float*>(input);
-    float* outputFloats = reinterpret_cast<float*>(output);
-
-    // Calculate number of float samples
-    jint numSamples = size / sizeof(float);
-
-    // Process each 32-bit float sample
+void processPcmFloat(float* input, float* output, jint numSamples) {
     for (jint i = 0; i < numSamples; i++) {
-        // Read float sample (typically in range [-1.0, 1.0])
-        float sample = inputFloats[i];
-
-        // Apply gain (reduce to 50%)
-        float processedSample = sample * GAIN;
-
-        // Clamp to valid float range
-        processedSample = std::max(-1.0f, std::min(1.0f, processedSample));
-
-        // Write processed sample
-        outputFloats[i] = processedSample;
+        float sample = input[i];
+        float processed = sample * GAIN;
+        processed = std::max(-1.0f, std::min(1.0f, processed));
+        output[i] = processed;
     }
 }
 
@@ -102,68 +79,40 @@ Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_processPcm(
         return;
     }
 
-    // Calculate size and adjust pointers to account for position
+    // Calculate size
     jint size = limit - position;
+
+    // Adjust pointers to account for position
     uint8_t* inputData = inputBase + position;
-    uint8_t* outputData = outputBase; // Output buffer position is already at 0
+    uint8_t* outputData = outputBase;
 
     // Process based on encoding type
     switch (encoding) {
-        case ENCODING_PCM_16BIT:
-            processPcm16Bit(inputData, outputData, size);
+        case ENCODING_PCM_16BIT: {
+            jint numSamples = size / 2;
+            processPcm16Bit(reinterpret_cast<int16_t*>(inputData),
+                            reinterpret_cast<int16_t*>(outputData),
+                            numSamples);
             break;
+        }
 
-        case ENCODING_PCM_FLOAT:
-            processPcmFloat(inputData, outputData, size);
+        case ENCODING_PCM_FLOAT: {
+            jint numSamples = size / 4;
+            processPcmFloat(reinterpret_cast<float*>(inputData),
+                            reinterpret_cast<float*>(outputData),
+                            numSamples);
             break;
+        }
 
         default:
-            // Unsupported encoding
             jclass exceptionClass = env->FindClass("java/lang/IllegalArgumentException");
             env->ThrowNew(exceptionClass, "Unsupported audio encoding");
             break;
     }
 }
 
-JNIEXPORT jobject JNICALL
-Java_com_example_audioprocessorsample_NoopAudioProcessor_processBufferNative(
-        JNIEnv *env,
-        jobject thiz,
-        jobject inputBuffer,
-        jint sampleRate,
-        jint channelCount,
-        jint bytesPerFrame,
-        jlong instancePointer) {
-
-    // 1. 获取 ByteBuffer 的直接缓冲区指针
-    void *inputPtr = env->GetDirectBufferAddress(inputBuffer);
-    jlong capacity = env->GetDirectBufferCapacity(inputBuffer);
-
-    if (inputPtr == nullptr || capacity <= 0) {
-        LOGD("Invalid ByteBuffer");
-        return nullptr;
-    }
-
-    // 2. 创建输出 ByteBuffer（分配同样大小）
-    jobject outputBuffer = env->NewDirectByteBuffer(malloc(capacity), capacity);
-    void *outputPtr = env->GetDirectBufferAddress(outputBuffer);
-
-    // 3. 处理音频数据（示例：音量减半）
-    auto *inputAudio = static_cast<int16_t*>(inputPtr);
-    auto *outputAudio = static_cast<int16_t*>(outputPtr);
-    int sampleCount = capacity / sizeof(int16_t);
-
-    for (int i = 0; i < sampleCount; i++) {
-        // 简单的音频处理：音量降低为50%
-        outputAudio[i] = inputAudio[i] / 2;
-    }
-
-    // 4. 返回处理后的 ByteBuffer
-    return outputBuffer;
-}
-
 JNIEXPORT jlong JNICALL
-Java_com_example_audioprocessorsample_NoopAudioProcessor_onConfigureNative(
+Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_onConfigureNative(
         JNIEnv *env,
         jobject thiz,
         jint sampleRate,
@@ -175,7 +124,7 @@ Java_com_example_audioprocessorsample_NoopAudioProcessor_onConfigureNative(
 }
 
 JNIEXPORT void JNICALL
-Java_com_example_audioprocessorsample_NoopAudioProcessor_onResetNative(
+Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_onResetNative(
         JNIEnv *env,
         jobject thiz,
         jlong instancePointer) {
@@ -184,7 +133,7 @@ Java_com_example_audioprocessorsample_NoopAudioProcessor_onResetNative(
 }
 
 JNIEXPORT void JNICALL
-Java_com_example_audioprocessorsample_NoopAudioProcessor_onFlushNative(
+Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_onFlushNative(
         JNIEnv *env,
         jobject thiz) {
     // Called when the processor is flushed.
@@ -192,7 +141,7 @@ Java_com_example_audioprocessorsample_NoopAudioProcessor_onFlushNative(
 }
 
 JNIEXPORT void JNICALL
-Java_com_example_audioprocessorsample_NoopAudioProcessor_onQueueEndOfStreamNative(
+Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_onQueueEndOfStreamNative(
         JNIEnv *env,
         jobject thiz) {
     // Called when the end-of-stream is queued to the processor.

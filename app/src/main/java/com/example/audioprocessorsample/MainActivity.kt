@@ -131,7 +131,7 @@ fun ExoPlayerScreen(
     // State to track if the player is currently playing
     val isPlayingState = remember { mutableStateOf(true) }
     val isPlaying = isPlayingState.value
-    val isAudioProcessorEnabledState = remember { mutableStateOf(false) }
+    val isAudioProcessorEnabledState = remember { mutableStateOf(audioProcessor.isEnabled()) }
     val isAudioProcessorEnabled = isAudioProcessorEnabledState.value
 
     // 2. Manage ExoPlayer lifecycle with DisposableEffect
