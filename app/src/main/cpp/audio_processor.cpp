@@ -10,7 +10,14 @@
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 // Define encoding constants matching Media3's C class
+#define ENCODING_INVALID 0
+#define ENCODING_PCM_8BIT 3
 #define ENCODING_PCM_16BIT 2
+#define ENCODING_PCM_16BIT_BIG_ENDIAN 0x10000000
+#define ENCODING_PCM_24BIT 21
+#define ENCODING_PCM_24BIT_BIG_ENDIAN 0x50000000
+#define ENCODING_PCM_32BIT 22
+#define ENCODING_PCM_32BIT_BIG_ENDIAN 0x60000000
 #define ENCODING_PCM_FLOAT 4
 
 // Gain multiplier for 50% loudness reduction
