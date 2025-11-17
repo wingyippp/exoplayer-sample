@@ -6,6 +6,7 @@ add_library(
         audio_processor
         SHARED
         audio_processor.cpp
+        bass_boost.cpp
 )
 
 # 查找 NDK 日志库

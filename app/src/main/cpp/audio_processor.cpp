@@ -4,6 +4,7 @@
 #include <malloc.h>
 #include <__algorithm/max.h>
 #include <__algorithm/min.h>
+#include "bass_boost.h"
 
 #define LOG_TAG "AudioProcessor"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
@@ -27,32 +28,34 @@ extern "C" {
 /**
  * Process 16-bit PCM audio data with 50% loudness reduction.
  */
-void processPcm16Bit(const int16_t* input, int16_t* output, jint numSamples) {
-    for (jint i = 0; i < numSamples; i++) {
-        int16_t sample = input[i];
-
-        // Apply gain - convert to float for precision
-        float processed = static_cast<float>(sample) * GAIN;
-
-        // Round and clamp
-        auto result = static_cast<int32_t>(processed);
-        result = std::max(static_cast<int32_t>(INT16_MIN),
-                          std::min(static_cast<int32_t>(INT16_MAX), result));
-
-        output[i] = static_cast<int16_t>(result);
-    }
+void processPcm16Bit(void *inst, const int16_t* input, int16_t* output, jint numSamples) {
+//    for (jint i = 0; i < numSamples; i++) {
+//        int16_t sample = input[i];
+//
+//        // Apply gain - convert to float for precision
+//        float processed = static_cast<float>(sample) * GAIN;
+//
+//        // Round and clamp
+//        auto result = static_cast<int32_t>(processed);
+//        result = std::max(static_cast<int32_t>(INT16_MIN),
+//                          std::min(static_cast<int32_t>(INT16_MAX), result));
+//
+//        output[i] = static_cast<int16_t>(result);
+//    }
+    processBassBoost(inst, (int16_t*)input, output, numSamples);
 }
 
 /**
  * Process 32-bit float PCM audio data with 50% loudness reduction.
  */
-void processPcmFloat(const float* input, float* output, jint numSamples) {
-    for (jint i = 0; i < numSamples; i++) {
-        float sample = input[i];
-        float processed = sample * GAIN;
-        processed = std::max(-1.0f, std::min(1.0f, processed));
-        output[i] = processed;
-    }
+void processPcmFloat(void *inst, const float* input, float* output, jint numSamples) {
+//    for (jint i = 0; i < numSamples; i++) {
+//        float sample = input[i];
+//        float processed = sample * GAIN;
+//        processed = std::max(-1.0f, std::min(1.0f, processed));
+//        output[i] = processed;
+//    }
+    processBassBoostFloat(inst, (float*)input, output, numSamples);
 }
 
 /**
@@ -66,7 +69,8 @@ Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_processPcm(
         jobject outputBuffer,
         jint position,
         jint limit,
-        jint encoding) {
+        jint encoding,
+        jlong instancePointer) {
 
     // Get direct buffer addresses
     auto* inputBase = static_cast<uint8_t*>(env->GetDirectBufferAddress(inputBuffer));
@@ -97,7 +101,7 @@ Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_processPcm(
     switch (encoding) {
         case ENCODING_PCM_16BIT: {
             jint numSamples = size / 2;
-            processPcm16Bit(reinterpret_cast<int16_t*>(inputData),
+            processPcm16Bit((void *)instancePointer, reinterpret_cast<int16_t*>(inputData),
                             reinterpret_cast<int16_t*>(outputData),
                             numSamples);
             break;
@@ -105,7 +109,7 @@ Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_processPcm(
 
         case ENCODING_PCM_FLOAT: {
             jint numSamples = size / 4;
-            processPcmFloat(reinterpret_cast<float*>(inputData),
+            processPcmFloat((void *)instancePointer, reinterpret_cast<float*>(inputData),
                             reinterpret_cast<float*>(outputData),
                             numSamples);
             break;
@@ -127,7 +131,9 @@ Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_onConfigureN
         jint bytesPerFrame) {
     // Called when the processor is configured for a new input format.
     LOGD("onConfigure");
-    return 2;
+    long inst = 0;
+    inst = (long)initBassBoost();
+    return inst;
 }
 
 JNIEXPORT void JNICALL
@@ -137,6 +143,7 @@ Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_onResetNativ
         jlong instancePointer) {
     // Called when the processor is reset.
     LOGD("onReset %lld", instancePointer);
+    closeBassBoost((void *)instancePointer);
 }
 
 JNIEXPORT void JNICALL

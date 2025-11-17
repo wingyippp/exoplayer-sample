@@ -22,7 +22,7 @@ class LoudnessReducerAudioProcessor : BaseAudioProcessor() {
     private var enabled: Boolean = false
     private var instancePointer: Long = 0L
 
-    private external fun processPcm(inputBuffer: ByteBuffer, outputBuffer: ByteBuffer, position: Int, limit: Int, encoding: Int)
+    private external fun processPcm(inputBuffer: ByteBuffer, outputBuffer: ByteBuffer, position: Int, limit: Int, encoding: Int, instance: Long)
 
     private external fun onConfigureNative(
         sampleRate: Int,
@@ -83,7 +83,7 @@ class LoudnessReducerAudioProcessor : BaseAudioProcessor() {
         outputBuffer.limit(size)
 
         // Call native method to process
-        processPcm(inputBuffer, outputBuffer, position, limit, inputAudioFormat.encoding)
+        processPcm(inputBuffer, outputBuffer, position, limit, inputAudioFormat.encoding, instancePointer)
 
         // Update input buffer position
         inputBuffer.position(limit)
@@ -91,6 +91,7 @@ class LoudnessReducerAudioProcessor : BaseAudioProcessor() {
         // Set output buffer position back to 0 and limit to size for reading
         outputBuffer.position(0)
         outputBuffer.limit(size)
+        
     }
 
     fun isEnabled(): Boolean = this.enabled
