@@ -21,6 +21,7 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -133,6 +134,9 @@ fun ExoPlayerScreen(
     val isPlaying = isPlayingState.value
     val isAudioProcessorEnabledState = remember { mutableStateOf(audioProcessor.isEnabled()) }
     val isAudioProcessorEnabled = isAudioProcessorEnabledState.value
+    val bassBoostGainValue = remember { mutableStateOf(0.4f) }
+    val bassBoostFrequency = remember { mutableStateOf(90f) }
+    val bassBoostQValue = remember { mutableStateOf(1.0f) }
 
     // 2. Manage ExoPlayer lifecycle with DisposableEffect
     // This releases the player resources when the composable leaves the screen.
@@ -232,9 +236,75 @@ fun ExoPlayerScreen(
                 ) {
                     Text(
                         text = if (isAudioProcessorEnabled) "To Disable AudioProcessor" else "To Enable AudioProcessor",
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
                     )
                 }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Text(
+                    text = "Bass boost gain: ${bassBoostGainValue.value * 100}%",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                )
+
+                Slider(
+                    value = bassBoostGainValue.value,
+                    onValueChange = { bassBoostGainValue.value = it },
+                    onValueChangeFinished = {
+                      audioProcessor.setParams(
+                          gain = bassBoostGainValue.value,
+                          frequency = bassBoostFrequency.value,
+                          qValue = bassBoostQValue.value,
+                      )
+                    },
+                    valueRange = 0f..1f,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Text(
+                    text = "Bass boost frequency: ${bassBoostFrequency.value}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                )
+
+                Slider(
+                    value = bassBoostFrequency.value,
+                    onValueChange = { bassBoostFrequency.value = it },
+                    onValueChangeFinished = {
+                        audioProcessor.setParams(
+                            gain = bassBoostGainValue.value,
+                            frequency = bassBoostFrequency.value,
+                            qValue = bassBoostQValue.value,
+                        )
+                    },
+                    valueRange = 20F..250F,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Text(
+                    text = "Bass boost Q value: ${bassBoostQValue.value}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                )
+
+                Slider(
+                    value = bassBoostQValue.value,
+                    onValueChange = { bassBoostQValue.value = it },
+                    onValueChangeFinished = {
+                        audioProcessor.setParams(
+                            gain = bassBoostGainValue.value,
+                            frequency = bassBoostFrequency.value,
+                            qValue = bassBoostQValue.value,
+                        )
+                    },
+                    valueRange = 0.1f..2.0f,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     )

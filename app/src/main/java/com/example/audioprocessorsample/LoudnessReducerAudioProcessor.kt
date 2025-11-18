@@ -36,6 +36,13 @@ class LoudnessReducerAudioProcessor : BaseAudioProcessor() {
 
     private external fun onQueueEndOfStreamNative()
 
+    private external fun setParamsNative(
+        sampleRate: Int,
+        gain: Float,
+        frequency: Float,
+        qValue: Float,
+    )
+
     override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
         instancePointer = onConfigureNative(
             inputAudioFormat.sampleRate,
@@ -91,12 +98,24 @@ class LoudnessReducerAudioProcessor : BaseAudioProcessor() {
         // Set output buffer position back to 0 and limit to size for reading
         outputBuffer.position(0)
         outputBuffer.limit(size)
-        
     }
 
     fun isEnabled(): Boolean = this.enabled
 
     fun setEnable(enable: Boolean) {
         this.enabled = enable
+    }
+
+    fun setParams(
+        gain: Float,
+        frequency: Float,
+        qValue: Float,
+    ) {
+        setParamsNative(
+            inputAudioFormat.sampleRate,
+            gain,
+            frequency,
+            qValue,
+        )
     }
 }

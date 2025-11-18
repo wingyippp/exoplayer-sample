@@ -162,4 +162,17 @@ Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_onQueueEndOf
     LOGD("onQueueEndOfStream");
 }
 
+JNIEXPORT void JNICALL
+Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_setParamsNative(
+        JNIEnv *env,
+        jobject thisObject,
+        jint sampleRate,
+        jfloat gain,
+        jfloat frequency,
+        jfloat qValue
+        ) {
+    // Called when the processor is flushed.
+    LOGD("setParamNative gain:%f frequency:%f qValue:%f", gain, frequency, qValue);
+}
+
 } // extern "C"
