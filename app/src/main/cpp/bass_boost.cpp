@@ -5,8 +5,17 @@
 #include "bass_boost.h"
 #define CLAMP_INT16_SIMPLE(x) ((x) < -32768 ? -32768 : ((x) > 32767 ? 32767 : (x)))
 
-float bass_boost_filter_coeff_b[3] = {1.00315259e+00,-1.98468243e+00, 9.81760338e-01};
-float bass_boost_filter_coeff_a[2] = {-1.98473992e+00, 9.84855443e-01};
+// boost 6dB
+//float bass_boost_filter_coeff_b[3] = {1.00315259e+00,-1.98468243e+00, 9.81760338e-01};
+//float bass_boost_filter_coeff_a[2] = {-1.98473992e+00, 9.84855443e-01};
+
+// boost 9dB
+//float bass_boost_filter_coeff_b[3] = {1.00530646e+00,-1.98630007e+00, 9.81284028e-01};
+//float bass_boost_filter_coeff_a[2] = {-1.98639936e+00, 9.86491195e-01};
+
+// boost 12dB
+float bass_boost_filter_coeff_b[3] = {1.00588750e+00,-1.98810028e+00, 9.82488082e-01};
+float bass_boost_filter_coeff_a[2] = {-1.98820336e+00, 9.88272509e-01};
 
 void *initBassBoost()
 {
