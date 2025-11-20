@@ -10,12 +10,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -162,6 +166,8 @@ fun ExoPlayerScreen(
         }
     }
 
+    val scrollState = rememberScrollState()
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -172,6 +178,7 @@ fun ExoPlayerScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(scrollState)
                     .padding(paddingValues)
                     .background(Color.Black),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -305,6 +312,8 @@ fun ExoPlayerScreen(
                     valueRange = 0.1f..2.0f,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     )
