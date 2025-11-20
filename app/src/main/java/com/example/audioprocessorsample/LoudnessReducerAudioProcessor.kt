@@ -41,6 +41,7 @@ class LoudnessReducerAudioProcessor : BaseAudioProcessor() {
         gain: Float,
         frequency: Float,
         qValue: Float,
+        instance: Long
     )
 
     override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
@@ -116,6 +117,7 @@ class LoudnessReducerAudioProcessor : BaseAudioProcessor() {
             gain,
             frequency,
             qValue,
+            instancePointer
         )
     }
 }

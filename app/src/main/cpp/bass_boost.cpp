@@ -1,33 +1,48 @@
 //
 // Created on 2025/11/10.
 //
-
+#include <cmath>
 #include "bass_boost.h"
 #define CLAMP_INT16_SIMPLE(x) ((x) < -32768 ? -32768 : ((x) > 32767 ? 32767 : (x)))
-
-// boost 6dB
-//float bass_boost_filter_coeff_b[3] = {1.00315259e+00,-1.98468243e+00, 9.81760338e-01};
-//float bass_boost_filter_coeff_a[2] = {-1.98473992e+00, 9.84855443e-01};
-
-// boost 9dB
-//float bass_boost_filter_coeff_b[3] = {1.00530646e+00,-1.98630007e+00, 9.81284028e-01};
-//float bass_boost_filter_coeff_a[2] = {-1.98639936e+00, 9.86491195e-01};
-
-// boost 12dB
-float bass_boost_filter_coeff_b[3] = {1.00588750e+00,-1.98810028e+00, 9.82488082e-01};
-float bass_boost_filter_coeff_a[2] = {-1.98820336e+00, 9.88272509e-01};
+#define PI 3.141592653
+#define MAX_BOOST 21
 
 void *initBassBoost()
 {
     auto *inst = (bass_boost_filter_t *)malloc(sizeof(bass_boost_filter_t));
     memset(inst, 0, sizeof(bass_boost_filter_t));
 
-    memcpy(inst->left.b, bass_boost_filter_coeff_b, 3*sizeof(float));
-    memcpy(inst->left.a, bass_boost_filter_coeff_a, 2*sizeof(float));
-    memcpy(inst->right.b, bass_boost_filter_coeff_b, 3*sizeof(float));
-    memcpy(inst->right.a, bass_boost_filter_coeff_a, 2*sizeof(float));
-
     return inst;
+}
+
+void setBassBoostParam(void *inst, float gain, float Q, float freq, int sample_rate)
+{
+    auto *process_t = (bass_boost_filter_t *)inst;
+    double b[3], a[3];
+    double w0, A, alpha;
+    double cos_w0, sqrt_A;
+    double inv_a0;
+    gain = MAX_BOOST * gain;
+    w0 = 2 * PI * freq / sample_rate;
+    A = sqrt(pow(10, gain*0.05));
+    alpha = sin(w0) / (2 * Q);
+    cos_w0 = cos(w0);
+    sqrt_A = sqrt(A);
+
+    b[0] = A * ((A + 1) - (A - 1) * cos_w0 + 2 * sqrt_A * alpha);
+    b[1] = 2 * A * ((A - 1) - (A + 1) * cos_w0);
+    b[2] = A * ((A + 1) - (A - 1) * cos_w0 - 2 * sqrt_A * alpha);
+    a[0] = (A + 1) + (A - 1) * cos_w0 + 2 * sqrt_A * alpha;
+    a[1] = -2 * ((A - 1) + (A + 1) * cos_w0);
+    a[2] = (A + 1) + (A - 1) * cos_w0 - 2 * sqrt_A * alpha;
+
+    inv_a0 = 1.0 / a[0];
+    process_t->right.b[0] = process_t->left.b[0] = float(b[0] * inv_a0);
+    process_t->right.b[1] = process_t->left.b[1] = float(b[1] * inv_a0);
+    process_t->right.b[2] = process_t->left.b[2] = float(b[2] * inv_a0);
+    process_t->right.a[0] = process_t->left.a[0] = float(a[1] * inv_a0);
+    process_t->right.a[1] = process_t->left.a[1] = float(a[2] * inv_a0);
+
 }
 
 void iir_filter(float *inOut, int len, biquad_t *filter)

@@ -169,10 +169,12 @@ Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_setParamsNat
         jint sampleRate,
         jfloat gain,
         jfloat frequency,
-        jfloat qValue
+        jfloat qValue,
+        jlong instancePointer
         ) {
     // Called when the processor is flushed.
     LOGD("setParamNative gain:%f frequency:%f qValue:%f", gain, frequency, qValue);
+    setBassBoostParam((void *)instancePointer, gain, qValue, frequency, sampleRate);
 }
 
 } // extern "C"
