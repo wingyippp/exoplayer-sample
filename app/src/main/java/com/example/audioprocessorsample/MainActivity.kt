@@ -10,14 +10,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -29,6 +27,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -138,9 +137,9 @@ fun ExoPlayerScreen(
     val isPlaying = isPlayingState.value
     val isAudioProcessorEnabledState = remember { mutableStateOf(audioProcessor.isEnabled()) }
     val isAudioProcessorEnabled = isAudioProcessorEnabledState.value
-    val bassBoostGainValue = remember { mutableStateOf(0.4f) }
-    val bassBoostFrequency = remember { mutableStateOf(90f) }
-    val bassBoostQValue = remember { mutableStateOf(1.0f) }
+    val bassBoostGainValue = remember { mutableFloatStateOf(0.4f) }
+    val bassBoostFrequency = remember { mutableFloatStateOf(90f) }
+    val bassBoostQValue = remember { mutableFloatStateOf(0.7f) }
 
     // 2. Manage ExoPlayer lifecycle with DisposableEffect
     // This releases the player resources when the composable leaves the screen.
@@ -235,6 +234,11 @@ fun ExoPlayerScreen(
                     onClick = {
                         val toUpdate = !audioProcessor.isEnabled()
                         audioProcessor.setEnable(toUpdate)
+                        audioProcessor.setParams(
+                            gain = bassBoostGainValue.floatValue,
+                            frequency = bassBoostFrequency.floatValue,
+                            qValue = bassBoostQValue.floatValue,
+                        )
                         isAudioProcessorEnabledState.value = toUpdate
                     },
                     modifier = Modifier
@@ -250,67 +254,67 @@ fun ExoPlayerScreen(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Text(
-                    text = "Bass boost gain: ${bassBoostGainValue.value * 100}%",
+                    text = "Bass boost gain: ${bassBoostGainValue.floatValue * 100}%",
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White,
                 )
 
                 Slider(
-                    value = bassBoostGainValue.value,
-                    onValueChange = { bassBoostGainValue.value = it },
+                    value = bassBoostGainValue.floatValue,
+                    onValueChange = { bassBoostGainValue.floatValue = it },
                     onValueChangeFinished = {
                       audioProcessor.setParams(
-                          gain = bassBoostGainValue.value,
-                          frequency = bassBoostFrequency.value,
-                          qValue = bassBoostQValue.value,
+                          gain = bassBoostGainValue.floatValue,
+                          frequency = bassBoostFrequency.floatValue,
+                          qValue = bassBoostQValue.floatValue,
                       )
                     },
                     valueRange = 0f..1f,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Text(
-                    text = "Bass boost frequency: ${bassBoostFrequency.value}",
+                    text = "Bass boost frequency: ${bassBoostFrequency.floatValue}",
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White,
                 )
 
                 Slider(
-                    value = bassBoostFrequency.value,
-                    onValueChange = { bassBoostFrequency.value = it },
+                    value = bassBoostFrequency.floatValue,
+                    onValueChange = { bassBoostFrequency.floatValue = it },
                     onValueChangeFinished = {
                         audioProcessor.setParams(
-                            gain = bassBoostGainValue.value,
-                            frequency = bassBoostFrequency.value,
-                            qValue = bassBoostQValue.value,
+                            gain = bassBoostGainValue.floatValue,
+                            frequency = bassBoostFrequency.floatValue,
+                            qValue = bassBoostQValue.floatValue,
                         )
                     },
                     valueRange = 20F..250F,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Text(
-                    text = "Bass boost Q value: ${bassBoostQValue.value}",
+                    text = "Bass boost Q value: ${bassBoostQValue.floatValue}",
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White,
                 )
 
                 Slider(
-                    value = bassBoostQValue.value,
-                    onValueChange = { bassBoostQValue.value = it },
+                    value = bassBoostQValue.floatValue,
+                    onValueChange = { bassBoostQValue.floatValue = it },
                     onValueChangeFinished = {
                         audioProcessor.setParams(
-                            gain = bassBoostGainValue.value,
-                            frequency = bassBoostFrequency.value,
-                            qValue = bassBoostQValue.value,
+                            gain = bassBoostGainValue.floatValue,
+                            frequency = bassBoostFrequency.floatValue,
+                            qValue = bassBoostQValue.floatValue,
                         )
                     },
                     valueRange = 0.1f..2.0f,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
