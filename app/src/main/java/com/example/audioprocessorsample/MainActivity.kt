@@ -1,6 +1,7 @@
 package com.example.audioprocessorsample
 
 import android.content.Context
+import android.media.AudioManager
 import android.net.Uri
 import android.os.Bundle
 import android.view.ViewGroup
@@ -81,6 +82,7 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+        volumeControlStream = AudioManager.STREAM_MUSIC
     }
 
     private fun copyAssets() {

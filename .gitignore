@@ -21,6 +21,8 @@ local.properties
 # cpp
 /*/.cxx/
 
+/.kotlin
+
 # OS-specific files
 .DS_Store
 .DS_Store?
