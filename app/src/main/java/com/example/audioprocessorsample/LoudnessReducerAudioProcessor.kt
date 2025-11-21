@@ -5,9 +5,10 @@ import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.audio.BaseAudioProcessor
 import androidx.media3.common.util.UnstableApi
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 private const val TAG = "LoudnessReducerAudioProcessor"
-private const val DEFAULT_ENABLE = true
+private const val DEFAULT_ENABLE = false
 
 /**
  * Audio processor that reduces loudness to 50% by applying a 0.5 gain multiplier.
@@ -82,12 +83,6 @@ class LoudnessReducerAudioProcessor : BaseAudioProcessor() {
     override fun queueInput(inputBuffer: ByteBuffer) {
         if (!isActive) {
             return
-        } else if (!isEnabled()) {
-            val remaining = inputBuffer.remaining()
-            if (remaining > 0) {
-                replaceOutputBuffer(remaining).put(inputBuffer).flip()
-            }
-            return
         }
 
         val position = inputBuffer.position()
@@ -107,8 +102,20 @@ class LoudnessReducerAudioProcessor : BaseAudioProcessor() {
         outputBuffer.position(0)
         outputBuffer.limit(outputSize)
 
-        // Call native method to process
-        processPcm(inputBuffer, outputBuffer, position, limit, inputAudioFormat.encoding, instancePointer)
+        if (isEnabled()) {
+            // Call native method to process
+            processPcm(inputBuffer, outputBuffer, position, limit, inputAudioFormat.encoding, instancePointer)
+        } else if (inputAudioFormat.encoding == C.ENCODING_PCM_16BIT) {
+            // Convert PCM_16BIT to PCM_FLOAT
+            convertPcm16BitToFloat(inputBuffer, outputBuffer, position, limit)
+        } else {
+            // Processor disabled and no conversion needed: pass through
+            // Input and output are same format (e.g., both PCM_FLOAT)
+            inputBuffer.position(position)
+            inputBuffer.limit(limit)
+            outputBuffer.put(inputBuffer)
+            inputBuffer.limit(inputBuffer.capacity())  // Restore original limit
+        }
 
         // Update input buffer position
         inputBuffer.position(limit)
@@ -136,5 +143,37 @@ class LoudnessReducerAudioProcessor : BaseAudioProcessor() {
             qValue,
             instancePointer
         )
+    }
+
+    private fun convertPcm16BitToFloat(
+        inputBuffer: ByteBuffer,
+        outputBuffer: ByteBuffer,
+        position: Int,
+        limit: Int
+    ) {
+        // Set input buffer to little-endian (standard for PCM)
+        inputBuffer.order(ByteOrder.LITTLE_ENDIAN)
+        outputBuffer.order(ByteOrder.LITTLE_ENDIAN)
+
+        // Save original position
+        val originalPosition = inputBuffer.position()
+
+        // Set position for reading
+        inputBuffer.position(position)
+
+        // Convert each 16-bit sample to float
+        while (inputBuffer.position() < limit) {
+            // Read int16 sample
+            val sample = inputBuffer.short
+
+            // Convert to float in range [-1.0, 1.0]
+            val floatSample = sample.toFloat() / 32768.0f
+
+            // Write float sample
+            outputBuffer.putFloat(floatSample)
+        }
+
+        // Restore input buffer position
+        inputBuffer.position(originalPosition)
     }
 }
