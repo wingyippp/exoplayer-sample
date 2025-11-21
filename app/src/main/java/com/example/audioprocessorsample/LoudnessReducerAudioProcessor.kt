@@ -1,11 +1,13 @@
 package com.example.audioprocessorsample
 
+import androidx.media3.common.C
 import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.audio.BaseAudioProcessor
 import androidx.media3.common.util.UnstableApi
 import java.nio.ByteBuffer
 
 private const val TAG = "LoudnessReducerAudioProcessor"
+private const val DEFAULT_ENABLE = true
 
 /**
  * Audio processor that reduces loudness to 50% by applying a 0.5 gain multiplier.
@@ -19,7 +21,7 @@ class LoudnessReducerAudioProcessor : BaseAudioProcessor() {
         }
     }
 
-    private var enabled: Boolean = false
+    private var enabled: Boolean = DEFAULT_ENABLE
     private var instancePointer: Long = 0L
 
     private external fun processPcm(inputBuffer: ByteBuffer, outputBuffer: ByteBuffer, position: Int, limit: Int, encoding: Int, instance: Long)
@@ -50,7 +52,16 @@ class LoudnessReducerAudioProcessor : BaseAudioProcessor() {
             inputAudioFormat.channelCount,
             inputAudioFormat.bytesPerFrame,
         )
-        return inputAudioFormat
+        // If input is PCM_16BIT, output as PCM_FLOAT
+        return if (inputAudioFormat.encoding == C.ENCODING_PCM_16BIT) {
+            AudioProcessor.AudioFormat(
+                inputAudioFormat.sampleRate,
+                inputAudioFormat.channelCount,
+                C.ENCODING_PCM_FLOAT  // Change encoding
+            )
+        } else {
+            inputAudioFormat
+        }
     }
 
     override fun onReset() {
@@ -81,14 +92,20 @@ class LoudnessReducerAudioProcessor : BaseAudioProcessor() {
 
         val position = inputBuffer.position()
         val limit = inputBuffer.limit()
-        val size = limit - position
+        val inputSize = limit - position
+
+        // Calculate output size based on format conversion
+        val outputSize = when (inputAudioFormat.encoding) {
+            C.ENCODING_PCM_16BIT -> inputSize * 2  // int16 (2 bytes) -> float (4 bytes)
+            else -> inputSize
+        }
 
         // Allocate output buffer
-        val outputBuffer = replaceOutputBuffer(size)
+        val outputBuffer = replaceOutputBuffer(outputSize)
 
         // Set output buffer position to write from the beginning
         outputBuffer.position(0)
-        outputBuffer.limit(size)
+        outputBuffer.limit(outputSize)
 
         // Call native method to process
         processPcm(inputBuffer, outputBuffer, position, limit, inputAudioFormat.encoding, instancePointer)
@@ -98,7 +115,7 @@ class LoudnessReducerAudioProcessor : BaseAudioProcessor() {
 
         // Set output buffer position back to 0 and limit to size for reading
         outputBuffer.position(0)
-        outputBuffer.limit(size)
+        outputBuffer.limit(outputSize)
     }
 
     fun isEnabled(): Boolean = this.enabled

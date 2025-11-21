@@ -45,6 +45,18 @@ void processPcm16Bit(void *inst, const int16_t* input, int16_t* output, jint num
     processBassBoost(inst, (int16_t*)input, output, numSamples);
 }
 
+void processPcm16BitToFloat(void *inst, const int16_t* input, float* output, jint numSamples) {
+    for (jint i = 0; i < numSamples; i++) {
+        // Convert int16 to float [-1.0, 1.0]
+        float normalized = static_cast<float>(input[i]) / 32768.0f;
+
+        // Apply your bass boost processing
+        // ... your processing here ...
+
+        output[i] = normalized;  // or processed value
+    }
+}
+
 /**
  * Process 32-bit float PCM audio data with 50% loudness reduction.
  */
@@ -101,9 +113,11 @@ Java_com_example_audioprocessorsample_LoudnessReducerAudioProcessor_processPcm(
     switch (encoding) {
         case ENCODING_PCM_16BIT: {
             jint numSamples = size / 2;
-            processPcm16Bit((void *)instancePointer, reinterpret_cast<int16_t*>(inputData),
-                            reinterpret_cast<int16_t*>(outputData),
-                            numSamples);
+            // Output is float, so size * 2
+            processPcm16BitToFloat((void *)instancePointer,
+                                   reinterpret_cast<int16_t*>(inputData),
+                                   reinterpret_cast<float*>(outputData),
+                                   numSamples);
             break;
         }
 

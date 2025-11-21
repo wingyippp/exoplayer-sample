@@ -69,7 +69,9 @@ class MainActivity : ComponentActivity() {
                 enableAudioTrackPlaybackParams: Boolean
             ): AudioSink {
                 val audioSinkBuilder = DefaultAudioSink.Builder(this@MainActivity)
-                audioSinkBuilder.setAudioProcessors(listOf(audioProcessor).toTypedArray())
+                audioSinkBuilder.setAudioProcessorChain(
+                    SingleAudioProcessChain(listOf(audioProcessor).toTypedArray())
+                )
                 return audioSinkBuilder.build()
             }
         }
