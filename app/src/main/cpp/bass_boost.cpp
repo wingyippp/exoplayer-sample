@@ -146,6 +146,33 @@ int processBassBoost(void *inst, int16_t *input_data, int16_t *output_data, int 
     return 0;
 }
 
+int processBassBoost16BitToFloat(void *inst, int16_t *input_data, float *output_data, int input_len)
+{
+    auto *process_t = (bass_boost_filter_t *)inst;
+    int samples_per_ch = input_len / 2; //for stereo audio
+    auto tmp_buf = (float *)malloc(input_len * sizeof(float));
+
+    float inv_INT16_MAX = 1.0 / 32768;
+    for(int i = 0; i < samples_per_ch; i++){
+        tmp_buf[i] = (float)input_data[2 * i] * inv_INT16_MAX;
+        tmp_buf[i + samples_per_ch] = (float)input_data[2 * i + 1] * inv_INT16_MAX;
+    }
+
+    iir_filter(tmp_buf, samples_per_ch, &(process_t->left));
+    iir_filter(tmp_buf + samples_per_ch, samples_per_ch, &(process_t->right));
+
+    for(int i = 0; i < samples_per_ch; i++){
+        output_data[2 * i] = tmp_buf[i];
+        output_data[2 * i + 1] = tmp_buf[i + samples_per_ch];
+    }
+
+    if(tmp_buf){
+        free(tmp_buf);
+        tmp_buf = nullptr;
+    }
+    return 0;
+}
+
 int processBassBoostFloat(void *inst, float *input_data, float *output_data, int input_len)
 {
     auto *process_t = (bass_boost_filter_t *)inst;
@@ -159,7 +186,7 @@ int processBassBoostFloat(void *inst, float *input_data, float *output_data, int
     }
 
     iir_filter(input_data, samples_per_ch, &(process_t->left));
-    iir_filter(input_data+samples_per_ch, samples_per_ch, &(process_t->right));
+    iir_filter(input_data + samples_per_ch, samples_per_ch, &(process_t->right));
 
     for(int i = 0; i < samples_per_ch; i++){
         output_data[2 * i] = input_data[i];

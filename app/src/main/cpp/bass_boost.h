@@ -23,6 +23,7 @@ typedef struct{
 void *initBassBoost();
 void setBassBoostParam(void *inst, float gain, float Q, float freq, int sample_rate);
 int processBassBoost(void *inst, int16_t *input_data, int16_t *output_data, int input_len);
+int processBassBoost16BitToFloat(void *inst, int16_t *input_data, float *output_data, int input_len);
 int processBassBoostFloat(void *inst, float *input_data, float *output_data, int input_len);
 void closeBassBoost(void *inst);
 
